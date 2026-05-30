@@ -538,10 +538,32 @@ pub fn attach_terminal(
     host_id: String,
     session_id: String,
 ) -> Result<(), String> {
-    let session = state.pool.with_session(&host_id, |s| Ok(s.clone()))?;
-    state
-        .shell_manager
-        .start(app, session, session_id, 80, 24)
+    let host = load_hosts(&state.hosts_config_path)
+        .into_iter()
+        .find(|h| h.id == host_id)
+        .ok_or_else(|| format!("Host {host_id} not found"))?;
+
+    let auth = match host.auth_type.as_str() {
+        "key" => crate::ssh::connection::AuthMethod::KeyFile {
+            path: host.key_path.unwrap_or_default(),
+            passphrase: host.key_passphrase,
+        },
+        "agent" => crate::ssh::connection::AuthMethod::Agent,
+        _ => crate::ssh::connection::AuthMethod::Password {
+            password: host.password.unwrap_or_default(),
+        },
+    };
+
+    let config = crate::ssh::connection::HostConfig {
+        id: host.id,
+        name: host.name,
+        host: host.host,
+        port: host.port,
+        username: host.username,
+        auth,
+    };
+
+    state.shell_manager.start(app, &config, session_id, 80, 24)
 }
 
 #[tauri::command]

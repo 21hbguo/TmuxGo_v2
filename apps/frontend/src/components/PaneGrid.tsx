@@ -19,8 +19,7 @@ export function PaneGrid() {
   const connectionStatus = useConsoleStore((s) => s.connection.status)
   const updateConnection = useConsoleStore((s) => s.updateConnection)
   const updateTerminalPerf = useConsoleStore((s) => s.updateTerminalPerf)
-  const { send, isConnected, isSocketReady, subscribeOutput, attach: transportAttach } = useTransport()
-  const activeHostId = useConsoleStore((s) => s.activeHostId)
+  const { send, isConnected, isSocketReady, subscribeOutput } = useTransport()
   const { t } = useTranslation()
   const { preferences } = usePreferences()
   const isMobile = isMobileDevice()
@@ -96,16 +95,7 @@ export function PaneGrid() {
     clearAttachTimers()
     attachStartedAtRef.current = typeof performance !== 'undefined' ? performance.now() : Date.now()
     updateConnection({ status: 'attaching' })
-    const sent = send({ type: 'attach', sessionName, cols: size?.cols || 120, rows: size?.rows || 36, exclusive })
-    if (!sent) {
-      if (transportAttach && activeHostId && activeSessionId) {
-        transportAttach(activeHostId, activeSessionId).then(() => {
-          sentResizeRef.current = size || null
-          if (exclusive && size) sendResizeNow(size)
-        })
-      }
-      return
-    }
+    send({ type: 'attach', sessionName, cols: size?.cols || 120, rows: size?.rows || 36, exclusive })
     sentResizeRef.current = size || null
     attachTimerRef.current = setTimeout(() => {
       attachedRef.current = null
@@ -117,7 +107,7 @@ export function PaneGrid() {
         attachNow()
       }, ATTACH_RETRY_DELAY)
     }, ATTACH_TIMEOUT)
-  }, [activeHostId, activeSessionId, clearAttachTimers, exclusive, isSocketReady, send, sendResizeNow, sessionName, transportAttach, updateConnection])
+  }, [clearAttachTimers, exclusive, isSocketReady, send, sessionName, updateConnection])
 
   useEffect(() => {
     if (!activeSessionId) {

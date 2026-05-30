@@ -13,14 +13,43 @@ export function useSshTerminal() {
   const isSocketReady = connectionStatus === 'connected' || connectionStatus === 'attaching'
   const unlistenRef = useRef<UnlistenFn[]>([])
   const attachedRef = useRef(false)
+  const attachRef = useRef<((hostId: string, sessionId: string) => Promise<void>) | null>(null)
+
+  const attach = useCallback(async (hostId: string, sessionId: string) => {
+    try {
+      updateConnection({ status: 'attaching' })
+      await invoke('attach_terminal', { hostId, sessionId })
+      attachedRef.current = true
+      updateConnection({ status: 'connected' })
+      const sessionName = sessionId.replace('session-', '')
+      window.dispatchEvent(new CustomEvent('tmux-attached', { detail: { sessionName, sessionId } }))
+    } catch (err) {
+      console.error('Failed to attach terminal:', err)
+      updateConnection({ status: 'disconnected' })
+    }
+  }, [updateConnection])
+  attachRef.current = attach
 
   const send = useCallback(async (data: any) => {
+    if (data.type === 'attach') {
+      const state = useConsoleStore.getState()
+      const hostId = state.activeHostId
+      const sessionId = state.activeSessionId
+      if (hostId && sessionId && attachRef.current) {
+        await attachRef.current(hostId, sessionId)
+      }
+      return true
+    }
     if (data.type === 'input') {
-      await invoke('send_terminal_input', { sessionId: data.sessionId, data: data.data })
+      const sessionId = useConsoleStore.getState().activeSessionId
+      if (!sessionId) return false
+      await invoke('send_terminal_input', { sessionId, data: data.data })
       return true
     }
     if (data.type === 'resize') {
-      await invoke('resize_terminal', { sessionId: data.sessionId, cols: data.cols, rows: data.rows })
+      const sessionId = useConsoleStore.getState().activeSessionId
+      if (!sessionId) return false
+      await invoke('resize_terminal', { sessionId, cols: data.cols, rows: data.rows })
       return true
     }
     return false
@@ -30,19 +59,6 @@ export function useSshTerminal() {
     outputListeners.add(listener)
     return () => outputListeners.delete(listener)
   }, [])
-
-  const attach = useCallback(async (hostId: string, sessionId: string) => {
-    try {
-      updateConnection({ status: 'attaching' })
-      await invoke('attach_terminal', { hostId, sessionId })
-      attachedRef.current = true
-      updateConnection({ status: 'connected' })
-      window.dispatchEvent(new CustomEvent('tmux-attached', { detail: { sessionId } }))
-    } catch (err) {
-      console.error('Failed to attach terminal:', err)
-      updateConnection({ status: 'disconnected' })
-    }
-  }, [updateConnection])
 
   const detach = useCallback(async (sessionId: string) => {
     try {

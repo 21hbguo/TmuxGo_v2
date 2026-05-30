@@ -5,8 +5,11 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use tauri::{AppHandle, Emitter};
 
+use super::connection::{HostConfig, SshConnection};
+
 struct ShellInner {
     channel: Channel,
+    _conn: SshConnection,
 }
 
 pub struct ShellManager {
@@ -23,11 +26,13 @@ impl ShellManager {
     pub fn start(
         &self,
         app: AppHandle,
-        session: ssh2::Session,
+        config: &HostConfig,
         session_id: String,
         cols: u32,
         rows: u32,
     ) -> Result<(), String> {
+        let conn = SshConnection::connect(config)?;
+        let session = conn.session();
         session.set_blocking(false);
 
         let mut channel = session.channel_session().map_err(|e| format!("Channel failed: {e}"))?;
@@ -72,7 +77,7 @@ impl ShellManager {
         });
 
         let mut shells = self.shells.lock().map_err(|e| format!("Lock poisoned: {e}"))?;
-        shells.insert(session_id, ShellInner { channel });
+        shells.insert(session_id, ShellInner { channel, _conn: conn });
         Ok(())
     }
 
