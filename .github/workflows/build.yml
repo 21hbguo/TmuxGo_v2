@@ -21,6 +21,9 @@ jobs:
             target: macos
 
     runs-on: ${{ matrix.platform }}
+    defaults:
+      run:
+        shell: ${{ matrix.target == 'windows' && 'pwsh' || 'bash' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -47,8 +50,15 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Setup MSVC (Windows)
+        if: matrix.target == 'windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
+        env:
+          CC: ${{ matrix.target == 'windows' && 'cl' || '' }}
+          CXX: ${{ matrix.target == 'windows' && 'cl' || '' }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
