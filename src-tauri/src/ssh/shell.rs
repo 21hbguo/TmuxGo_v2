@@ -31,15 +31,22 @@ impl ShellManager {
         cols: u32,
         rows: u32,
     ) -> Result<(), String> {
+        // Close existing shell for this session if any
+        let _ = self.close(&session_id);
+
         let conn = SshConnection::connect(config)?;
         let session = conn.session();
-        session.set_blocking(false);
+        // Keep blocking mode for channel setup
+        session.set_blocking(true);
 
         let mut channel = session.channel_session().map_err(|e| format!("Channel failed: {e}"))?;
         channel
             .request_pty("xterm-256color", None, Some((cols, rows, 0, 0)))
             .map_err(|e| format!("PTY request failed: {e}"))?;
         channel.shell().map_err(|e| format!("Shell failed: {e}"))?;
+
+        // Switch to non-blocking for the read loop
+        session.set_blocking(false);
 
         let sid = session_id.clone();
         let app_out = app.clone();
@@ -82,14 +89,28 @@ impl ShellManager {
     }
 
     pub fn write(&self, session_id: &str, data: &str) -> Result<(), String> {
-        let mut shells = self.shells.lock().map_err(|e| format!("Lock poisoned: {e}"))?;
-        let inner = shells.get_mut(session_id).ok_or("Shell not found")?;
         use std::io::Write;
-        inner
-            .channel
-            .write_all(data.as_bytes())
-            .map_err(|e| format!("Write failed: {e}"))?;
-        Ok(())
+        let mut retries = 0;
+        let mut offset = 0;
+        let bytes = data.as_bytes();
+        loop {
+            let mut shells = self.shells.lock().map_err(|e| format!("Lock poisoned: {e}"))?;
+            let inner = shells.get_mut(session_id).ok_or("Shell not found")?;
+            match inner.channel.write(&bytes[offset..]) {
+                Ok(n) => {
+                    offset += n;
+                    if offset >= bytes.len() { return Ok(()); }
+                }
+                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    retries += 1;
+                    if retries > 200 { return Err("Write timeout: too many WouldBlock retries".into()); }
+                    drop(shells);
+                    std::thread::sleep(std::time::Duration::from_millis(5));
+                    continue;
+                }
+                Err(e) => return Err(format!("Write failed: {e}")),
+            }
+        }
     }
 
     pub fn resize(&self, session_id: &str, cols: u32, rows: u32) -> Result<(), String> {

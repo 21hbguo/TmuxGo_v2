@@ -537,6 +537,8 @@ pub fn attach_terminal(
     app: tauri::AppHandle,
     host_id: String,
     session_id: String,
+    cols: Option<u32>,
+    rows: Option<u32>,
 ) -> Result<(), String> {
     let host = load_hosts(&state.hosts_config_path)
         .into_iter()
@@ -563,7 +565,7 @@ pub fn attach_terminal(
         auth,
     };
 
-    state.shell_manager.start(app, &config, session_id, 80, 24)
+    state.shell_manager.start(app, &config, session_id, cols.unwrap_or(120), rows.unwrap_or(36))
 }
 
 #[tauri::command]

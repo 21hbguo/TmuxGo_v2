@@ -13,19 +13,24 @@ export function useSshTerminal() {
   const isSocketReady = connectionStatus === 'connected' || connectionStatus === 'attaching'
   const unlistenRef = useRef<UnlistenFn[]>([])
   const attachedRef = useRef(false)
-  const attachRef = useRef<((hostId: string, sessionId: string) => Promise<void>) | null>(null)
+  const currentSessionRef = useRef<string | null>(null)
+  const attachRef = useRef<((hostId: string, sessionId: string, cols?: number, rows?: number) => Promise<void>) | null>(null)
 
-  const attach = useCallback(async (hostId: string, sessionId: string) => {
+  const attach = useCallback(async (hostId: string, sessionId: string, cols?: number, rows?: number) => {
     try {
+      currentSessionRef.current = sessionId
       updateConnection({ status: 'attaching' })
-      await invoke('attach_terminal', { hostId, sessionId })
+      await invoke('attach_terminal', { hostId, sessionId, cols: cols || 120, rows: rows || 36 })
       attachedRef.current = true
       updateConnection({ status: 'connected' })
       const sessionName = sessionId.replace('session-', '')
-      window.dispatchEvent(new CustomEvent('tmux-attached', { detail: { sessionName, sessionId } }))
+      window.dispatchEvent(new CustomEvent('tmux-attached', { detail: { sessionName, sessionId, cols, rows } }))
     } catch (err) {
       console.error('Failed to attach terminal:', err)
-      updateConnection({ status: 'disconnected' })
+      if (currentSessionRef.current === sessionId) {
+        attachedRef.current = false
+        updateConnection({ status: 'disconnected' })
+      }
     }
   }, [updateConnection])
   attachRef.current = attach
@@ -36,7 +41,7 @@ export function useSshTerminal() {
       const hostId = state.activeHostId
       const sessionId = state.activeSessionId
       if (hostId && sessionId && attachRef.current) {
-        await attachRef.current(hostId, sessionId)
+        await attachRef.current(hostId, sessionId, data.cols, data.rows)
       }
       return true
     }
@@ -70,16 +75,21 @@ export function useSshTerminal() {
 
   useEffect(() => {
     const setup = async () => {
-      const unlistenOutput = await listen<OutputMessage>('terminal-output', (event) => {
+      const unlistenOutput = await listen<{ data: string; sessionId?: string }>('terminal-output', (event) => {
+        if (event.payload.sessionId && event.payload.sessionId !== currentSessionRef.current) return
         Array.from(outputListeners).forEach((listener) => listener(event.payload))
       })
-      const unlistenClosed = await listen<string>('terminal-closed', () => {
+      const unlistenClosed = await listen<{ sessionId?: string }>('terminal-closed', (event) => {
+        if (event.payload.sessionId && event.payload.sessionId !== currentSessionRef.current) return
         attachedRef.current = false
+        currentSessionRef.current = null
         updateConnection({ status: 'disconnected' })
       })
-      const unlistenError = await listen<string>('terminal-error', (event) => {
+      const unlistenError = await listen<{ sessionId?: string }>('terminal-error', (event) => {
+        if (event.payload.sessionId && event.payload.sessionId !== currentSessionRef.current) return
         console.error('Terminal error:', event.payload)
         attachedRef.current = false
+        currentSessionRef.current = null
         updateConnection({ status: 'disconnected' })
       })
       unlistenRef.current = [unlistenOutput, unlistenClosed, unlistenError]
