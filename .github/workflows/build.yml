@@ -55,7 +55,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        run: npx tauri build
         env:
           CC: ${{ matrix.target == 'windows' && 'cl' || '' }}
           CXX: ${{ matrix.target == 'windows' && 'cl' || '' }}
