@@ -21,9 +21,6 @@ jobs:
             target: macos
 
     runs-on: ${{ matrix.platform }}
-    defaults:
-      run:
-        shell: ${{ matrix.target == 'windows' && 'pwsh' || 'bash' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -54,24 +51,8 @@ jobs:
         if: matrix.target == 'windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Install zlib via vcpkg (Windows)
-        if: matrix.target == 'windows'
-        shell: pwsh
-        run: |
-          vcpkg install zlib:x64-windows-static-md
-          echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
-
-      - name: Build Tauri app (Windows)
-        if: matrix.target == 'windows'
-        shell: pwsh
-        run: |
-          $env:CC = "cl"
-          $env:CXX = "cl"
-          npx tauri build
-
-      - name: Build Tauri app (Linux/macOS)
-        if: matrix.target != 'windows'
-        run: npx tauri build
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
