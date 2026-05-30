@@ -4,10 +4,10 @@ import { useEffect, useRef, useCallback } from 'react'
 import '@xterm/xterm/css/xterm.css'
 import { usePreferences } from '@/hooks/usePreferences'
 import { useMobileKeyboard } from '@/hooks/useMobileKeyboard'
-import { useWebSocket } from '@/hooks/useWebSocket'
+import { useTransport } from '@/hooks/useTransport'
 import { DELETE_NEXT_WORD_SEQUENCE, DELETE_PREV_WORD_SEQUENCE } from '@/lib/terminal-keys'
 import { useConsoleStore } from '@/stores/useConsoleStore'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import { useTerminalOutput } from '@/hooks/useTerminalOutput'
 import { useTerminalDrop } from '@/hooks/useTerminalDrop'
 import { useTerminalPasteBridge } from '@/hooks/useTerminalPasteBridge'
@@ -102,7 +102,7 @@ export function TerminalPane({ sessionName, onInput, onResize, attachExclusive =
     terminalTarget.dispatchEvent(new MouseEvent('click', { ...options, buttons: 0, detail: 1 }))
   }, [])
 
-  const { send } = useWebSocket()
+  const { send } = useTransport()
   const sendRef = useRef(send)
   const sendInput = useCallback((data: string) => onInputRef.current?.(data), [])
   const { textareaRef, focusKeyboard, isMobile: isMobileDevice } = useMobileKeyboard(sendInput, terminalRef)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import type { CustomShortcut } from '@/types'
 export type { CustomShortcut } from '@/types'
 

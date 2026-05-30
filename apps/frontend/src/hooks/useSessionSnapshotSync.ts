@@ -1,6 +1,6 @@
 'use client'
 import { useCallback } from 'react'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import { useConsoleStore } from '@/stores/useConsoleStore'
 import { useOptionalQueryClient } from './useOptionalQueryClient'
 

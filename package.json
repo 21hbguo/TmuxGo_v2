@@ -7,10 +7,13 @@
   "scripts": {
     "dev": "npm run dev --workspace=frontend & npm run dev --workspace=gateway",
     "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:vite": "npm run dev:vite --workspace=frontend",
     "dev:gateway": "npm run dev --workspace=gateway",
     "dev:agent": "npm run dev --workspace=agent",
+    "dev:tauri": "cd src-tauri && cargo run",
     "build": "npm run build --workspaces",
     "build:frontend": "npm run build --workspace=frontend",
+    "build:vite": "npm run build:vite --workspace=frontend",
     "build:frontend:stable": "env NEXT_DIST_DIR=.next-prod npm run build --workspace=frontend",
     "build:gateway": "npm run build --workspace=gateway",
     "build:agent": "npm run build --workspace=agent",
@@ -37,5 +40,9 @@
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.7"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/cli": "^2.11.2"
   }
 }

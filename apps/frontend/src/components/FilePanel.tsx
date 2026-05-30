@@ -6,7 +6,7 @@ import { useConsoleStore } from '@/stores/useConsoleStore'
 import type { FavoriteDirectory, FileContentMatch, FileDocumentHandle, FileItem, FileListResponse, FilePreviewResponse, FileRoot } from '@/types'
 import { writeClipboardText } from '@/lib/clipboard-text'
 import { quoteShellPath } from '@/lib/path-drop'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 
 type SearchMode = 'name' | 'content'
 type FileTypeFilter = 'all' | 'file' | 'directory'

@@ -1,11 +1,10 @@
 'use client'
-import dynamic from 'next/dynamic'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import type { FileEditorDocument } from '@/types'
 import { useConsoleStore } from '@/stores/useConsoleStore'
 import { usePreferences } from '@/hooks/usePreferences'
 
-const MonacoEditor=dynamic(() => import('@monaco-editor/react').then((mod) => mod.default), { ssr: false })
+const MonacoEditor = React.lazy(() => import('@monaco-editor/react').then(mod => ({ default: mod.default })))
 
 function getMonacoTheme(theme: string) {
   if (theme === 'light') return 'vs'
@@ -196,6 +195,7 @@ export function EditorWorkbench({ onSaveEditor }:{ onSaveEditor: (editor: FileEd
         ) : (
           <div className={`flex h-full min-h-0 ${markdownPreviewOpen ? 'flex-row' : 'flex-col'}`}>
             <div className={`${markdownPreviewOpen ? 'min-w-0 flex-1 border-r border-[var(--line)]' : 'h-full'}`}>
+              <Suspense fallback={<div className="flex h-full items-center justify-center text-text-3">Loading editor...</div>}>
               <MonacoEditor
                 key={activeEditor.id}
                 path={activeEditor.absolutePath}
@@ -259,6 +259,7 @@ export function EditorWorkbench({ onSaveEditor }:{ onSaveEditor: (editor: FileEd
                   padding: { top: 16, bottom: 16 },
                 }}
               />
+              </Suspense>
             </div>
             {markdownPreviewOpen && <div className="min-w-0 flex-1 overflow-auto bg-bg-1/60 px-6 py-5"><article className="prose prose-invert max-w-none text-sm text-text-2 [&_a]:text-accent [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--line)] [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-bg-2 [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:text-text-1 [&_h2]:mb-3 [&_h2]:mt-6 [&_h2]:text-2xl [&_h2]:text-text-1 [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:text-xl [&_h3]:text-text-1 [&_li]:mb-1 [&_p]:mb-3 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-bg-0 [&_pre]:p-4 [&_strong]:text-text-1" dangerouslySetInnerHTML={{ __html: markdownPreview || '<p>Nothing to preview.</p>' }} /></div>}
           </div>

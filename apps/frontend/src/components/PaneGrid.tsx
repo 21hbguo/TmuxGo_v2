@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useConsoleStore } from '@/stores/useConsoleStore'
 import { TerminalPane } from './TerminalPane'
-import { useWebSocket } from '@/hooks/useWebSocket'
+import { useTransport } from '@/hooks/useTransport'
 import { useTranslation } from '@/i18n'
 import { usePreferences } from '@/hooks/usePreferences'
 import { isMobileDevice } from '@/hooks/useMobileKeyboard'
@@ -19,7 +19,7 @@ export function PaneGrid() {
   const connectionStatus = useConsoleStore((s) => s.connection.status)
   const updateConnection = useConsoleStore((s) => s.updateConnection)
   const updateTerminalPerf = useConsoleStore((s) => s.updateTerminalPerf)
-  const { send, isConnected, isSocketReady, subscribeOutput } = useWebSocket()
+  const { send, isConnected, isSocketReady, subscribeOutput } = useTransport()
   const { t } = useTranslation()
   const { preferences } = usePreferences()
   const isMobile = isMobileDevice()

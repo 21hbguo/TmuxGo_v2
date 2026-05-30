@@ -4,6 +4,11 @@ export interface Host {
   address: string
   status: 'online' | 'offline' | 'unreachable'
   tags: string[]
+  host?: string
+  port?: number
+  username?: string
+  authType?: 'password' | 'key' | 'agent'
+  group?: string
 }
 
 export interface Session {

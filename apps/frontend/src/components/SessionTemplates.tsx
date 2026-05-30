@@ -1,7 +1,7 @@
 'use client'
 
 import { useConsoleStore } from '@/stores/useConsoleStore'
-import { useWebSocket } from '@/hooks/useWebSocket'
+import { useTransport } from '@/hooks/useTransport'
 import { useTranslation } from '@/i18n'
 
 interface Template {

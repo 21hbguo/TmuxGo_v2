@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 
 export interface SystemInfo {
   gpu: { used: number; total: number } | null

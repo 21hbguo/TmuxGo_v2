@@ -4,12 +4,12 @@ import { usePreferences } from '@/hooks/usePreferences'
 import { useTranslation } from '@/i18n'
 import { useConsoleStore } from '@/stores/useConsoleStore'
 import { useWindows } from '@/hooks/useApi'
-import { useWebSocket } from '@/hooks/useWebSocket'
+import { useTransport } from '@/hooks/useTransport'
 import { useCustomShortcuts, keysToEscape } from '@/hooks/useCustomShortcuts'
 import { useSessionSnapshotSync } from '@/hooks/useSessionSnapshotSync'
 import { AddShortcutModal } from './AddShortcutModal'
 import { ConfirmDialog } from './ConfirmDialog'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import { writeClipboardText } from '@/lib/clipboard-text'
 import { requestTerminalSelection } from '@/lib/terminal-selection'
 import { DELETE_PREV_LINE_SEQUENCE, DELETE_PREV_WORD_SEQUENCE } from '@/lib/terminal-keys'
@@ -37,7 +37,7 @@ function useQuickActionController() {
   const [pendingDirection,setPendingDirection]=useState<'horizontal'|'vertical'|null>(null)
   const activeWindow=useMemo(()=>windowsData.find((w:any)=>w.active)||windowsData[0]||null,[windowsData])
   const canSplit=!!activePaneId&&!!activeWindow&&!pendingDirection
-  const { send }=useWebSocket()
+  const { send }=useTransport()
   const { refreshSnapshot, resolveActivePaneId } = useSessionSnapshotSync()
   const { shortcuts,addShortcut,removeShortcut }=useCustomShortcuts()
   const [showModal,setShowModal]=useState(false)

@@ -9,6 +9,7 @@ import { ClipboardController } from './ClipboardController'
 import { MobileNav } from './MobileNav'
 import { MobileDrawer } from './MobileDrawer'
 import { Settings } from './Settings'
+import { ConnectionManager } from './ConnectionManager'
 import { InstallAppBanner } from './InstallAppBanner'
 import { ShortcutBar } from './ShortcutBar'
 import { ToastViewport } from './ToastViewport'
@@ -59,6 +60,7 @@ export function ConsoleLayout({ initialIsMobile=false }:{ initialIsMobile?:boole
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerType, setDrawerType] = useState<'sessions' | 'panes'>('sessions')
   const [showSettings, setShowSettings] = useState(false)
+  const [showConnectionManager, setShowConnectionManager] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const overlayRef = useRef<string[]>([])
   const ignoreNextPopRef = useRef(false)
@@ -339,7 +341,7 @@ export function ConsoleLayout({ initialIsMobile=false }:{ initialIsMobile?:boole
   return (
     <div className="flex w-screen flex-col overflow-hidden" style={{ height: appHeight, ['--app-height' as any]: appHeight }}>
       <InstallAppBanner />
-      {!isMobile && <TopBar />}
+      {!isMobile && <TopBar onManageConnections={() => setShowConnectionManager(true)} />}
       <div className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
         <main data-workspace-main className="flex flex-1 min-h-0 min-w-0 flex-col bg-bg-1">
           {isMobile ? <PaneGrid /> : <DesktopWorkbench />}
@@ -353,6 +355,7 @@ export function ConsoleLayout({ initialIsMobile=false }:{ initialIsMobile?:boole
       )}
       {showCommandPalette && <CommandPalette onClose={() => closeOverlay('palette')} />}
       {showSettings && <Settings onClose={dismissSettings} />}
+      {showConnectionManager && <ConnectionManager onClose={() => setShowConnectionManager(false)} />}
       <UploadConfirmDialog />
       <UploadQueue />
       <AppVersionGuard />

@@ -1,0 +1,79 @@
+import { useEffect, useRef, useCallback } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import { useConsoleStore } from '@/stores/useConsoleStore'
+
+type OutputMessage = { data: string; sessionName?: string | null }
+const outputListeners = new Set<(message: OutputMessage) => void>()
+
+export function useSshTerminal() {
+  const updateConnection = useConsoleStore((s) => s.updateConnection)
+  const connectionStatus = useConsoleStore((s) => s.connection.status)
+  const isConnected = connectionStatus === 'connected'
+  const isSocketReady = connectionStatus === 'connected' || connectionStatus === 'attaching'
+  const unlistenRef = useRef<UnlistenFn[]>([])
+  const attachedRef = useRef(false)
+
+  const send = useCallback(async (data: any) => {
+    if (data.type === 'input') {
+      await invoke('send_terminal_input', { sessionId: data.sessionId, data: data.data })
+      return true
+    }
+    if (data.type === 'resize') {
+      await invoke('resize_terminal', { sessionId: data.sessionId, cols: data.cols, rows: data.rows })
+      return true
+    }
+    return false
+  }, [])
+
+  const subscribeOutput = useCallback((listener: (message: OutputMessage) => void) => {
+    outputListeners.add(listener)
+    return () => outputListeners.delete(listener)
+  }, [])
+
+  const attach = useCallback(async (hostId: string, sessionId: string) => {
+    try {
+      updateConnection({ status: 'attaching' })
+      await invoke('attach_terminal', { hostId, sessionId })
+      attachedRef.current = true
+      updateConnection({ status: 'connected' })
+      window.dispatchEvent(new CustomEvent('tmux-attached', { detail: { sessionId } }))
+    } catch (err) {
+      console.error('Failed to attach terminal:', err)
+      updateConnection({ status: 'disconnected' })
+    }
+  }, [updateConnection])
+
+  const detach = useCallback(async (sessionId: string) => {
+    try {
+      await invoke('detach_terminal', { sessionId })
+    } catch {}
+    attachedRef.current = false
+    updateConnection({ status: 'disconnected' })
+  }, [updateConnection])
+
+  useEffect(() => {
+    const setup = async () => {
+      const unlistenOutput = await listen<OutputMessage>('terminal-output', (event) => {
+        Array.from(outputListeners).forEach((listener) => listener(event.payload))
+      })
+      const unlistenClosed = await listen<string>('terminal-closed', () => {
+        attachedRef.current = false
+        updateConnection({ status: 'disconnected' })
+      })
+      const unlistenError = await listen<string>('terminal-error', (event) => {
+        console.error('Terminal error:', event.payload)
+        attachedRef.current = false
+        updateConnection({ status: 'disconnected' })
+      })
+      unlistenRef.current = [unlistenOutput, unlistenClosed, unlistenError]
+    }
+    void setup()
+    return () => {
+      unlistenRef.current.forEach((fn) => fn())
+      unlistenRef.current = []
+    }
+  }, [updateConnection])
+
+  return { send, isConnected, isSocketReady, subscribeOutput, attach, detach }
+}

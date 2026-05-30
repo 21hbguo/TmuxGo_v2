@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import { quoteShellPath } from '@/lib/path-drop'
 import { useConsoleStore } from '@/stores/useConsoleStore'
 import { useFileRoots } from '@/hooks/useApi'

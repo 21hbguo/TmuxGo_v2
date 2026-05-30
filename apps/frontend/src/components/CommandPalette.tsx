@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useConsoleStore } from '@/stores/useConsoleStore'
 import { useTranslation } from '@/i18n'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import { ConfirmDialog } from './ConfirmDialog'
 import { writeClipboardText } from '@/lib/clipboard-text'
 import { requestTerminalSelection } from '@/lib/terminal-selection'

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 
 export function useHosts() {
   return useQuery({

@@ -5,7 +5,7 @@ import { ConnectionBadge } from './ConnectionBadge'
 import { useTranslation } from '@/i18n'
 import { useHosts, useSessions } from '@/hooks/useApi'
 
-export function TopBar() {
+export function TopBar({ onManageConnections }: { onManageConnections?: () => void }) {
   const activeHostId = useConsoleStore((state) => state.activeHostId)
   const activeSessionId = useConsoleStore((state) => state.activeSessionId)
   const setCommandPalette = useConsoleStore((state) => state.setCommandPalette)
@@ -51,6 +51,14 @@ export function TopBar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {onManageConnections && (
+            <button
+              onClick={onManageConnections}
+              className="rounded-lg px-3 py-1.5 text-sm bg-bg-2 text-text-3 hover:text-text-1 transition-colors"
+            >
+              Hosts
+            </button>
+          )}
           <button onClick={toggleSessionPanel} className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${sessionPanelExpanded ? 'bg-accent/20 text-accent' : 'bg-bg-2 text-text-3 hover:text-text-1'}`}>
             Sessions
           </button>

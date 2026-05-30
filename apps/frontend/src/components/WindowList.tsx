@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useConsoleStore } from '@/stores/useConsoleStore'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import { useWindows } from '@/hooks/useApi'
 import { useWindowQueryState } from '@/hooks/useWindowQueryState'
 

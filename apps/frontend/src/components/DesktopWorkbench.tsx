@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useConsoleStore } from '@/stores/useConsoleStore'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import type { FileDocumentHandle, FileEditorDocument } from '@/types'
 import { ActivityBar } from './ActivityBar'
 import { FilePanel } from './FilePanel'

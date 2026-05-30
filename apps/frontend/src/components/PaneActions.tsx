@@ -1,7 +1,7 @@
 'use client'
 
 import { useConsoleStore } from '@/stores/useConsoleStore'
-import { api } from '@/lib/api'
+import { currentApi as api } from '@/lib/api-adapter'
 import { useSessionSnapshotSync } from '@/hooks/useSessionSnapshotSync'
 
 export function PaneActions() {
