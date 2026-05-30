@@ -54,12 +54,12 @@ jobs:
         if: matrix.target == 'windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Override CC for Windows
+      - name: Install zlib via vcpkg (Windows)
         if: matrix.target == 'windows'
         shell: pwsh
         run: |
-          echo "CC=cl" >> $env:GITHUB_ENV
-          echo "CXX=cl" >> $env:GITHUB_ENV
+          vcpkg install zlib:x64-windows-static
+          echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
 
       - name: Build Tauri app
         run: npx tauri build
