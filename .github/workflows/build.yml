@@ -54,11 +54,15 @@ jobs:
         if: matrix.target == 'windows'
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Override CC for Windows
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          echo "CC=cl" >> $env:GITHUB_ENV
+          echo "CXX=cl" >> $env:GITHUB_ENV
+
       - name: Build Tauri app
         run: npx tauri build
-        env:
-          CC: ${{ matrix.target == 'windows' && 'cl' || '' }}
-          CXX: ${{ matrix.target == 'windows' && 'cl' || '' }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
